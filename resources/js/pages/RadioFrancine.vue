@@ -402,7 +402,7 @@
     error.value = null;
 
     try {
-      const response = await fetch('/api/radio/francine/now-playing', {
+      const response = await fetch('/rest/radio/francine/now-playing', {
         headers: {
           Accept: 'application/json',
         },
