@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "wsl.exe",
+            "args": [
+                "/home/laurent/.phpbrew/php/php-8.4.7/bin/php",
+                "/home/laurent/Boulot/radio-francine/artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}

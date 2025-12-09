@@ -1,0 +1,112 @@
+version: "3.9"
+
+name: radio-francine-dev
+
+services:
+  app:
+    build:
+      context: .
+      target: app
+      args:
+        WWWUSER: ${WWWUSER:-1000}
+        WWWGROUP: ${WWWGROUP:-1000}
+    volumes:
+      - .:/var/www/html:cached
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: https://radio-francine.c0chett0.dev
+      VITE_DEV_SERVER_URL: https://vite.radio-francine.c0chett0.dev
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: radio
+      DB_PASSWORD: radio
+      DB_DATABASE: radio
+      REDIS_HOST: redis
+    depends_on:
+      - db
+      - redis
+    networks:
+      - internal
+
+  web:
+    image: caddy:2-alpine
+    volumes:
+      - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - .:/var/www/html:cached
+    depends_on:
+      - app
+    networks:
+      - internal
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.radio-francine.rule=Host(`radio-francine.c0chett0.dev`)
+      - traefik.http.routers.radio-francine.entrypoints=websecure
+      - traefik.http.routers.radio-francine.tls=true
+      - traefik.http.services.radio-francine.loadbalancer.server.port=80
+
+  node:
+    image: node:22-alpine
+    working_dir: /var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173 --strictPort"
+    volumes:
+      - .:/var/www/html:cached
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5173
+      VITE_DEV_SERVER_HOSTNAME: vite.radio-francine.c0chett0.dev
+      VITE_DEV_SERVER_PROTOCOL: wss
+      VITE_DEV_SERVER_CLIENT_PORT: 443
+    networks:
+      - internal
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.radio-francine-vite.rule=Host(`vite.radio-francine.c0chett0.dev`)
+      - traefik.http.routers.radio-francine-vite.entrypoints=websecure
+      - traefik.http.routers.radio-francine-vite.tls=true
+      - traefik.http.services.radio-francine-vite.loadbalancer.server.port=5173
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: radio
+      POSTGRES_PASSWORD: radio
+      POSTGRES_DB: radio
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - internal
+
+  queue:
+    build:
+      context: .
+      target: app
+      args:
+        WWWUSER: ${WWWUSER:-1000}
+        WWWGROUP: ${WWWGROUP:-1000}
+    command: php artisan queue:work --tries=1
+    volumes:
+      - .:/var/www/html:cached
+    depends_on:
+      - app
+      - redis
+    networks:
+      - internal
+
+networks:
+  internal:
+  traefik:
+    external: true
+    name: traefik_network
+
+volumes:
+  db-data:
+
