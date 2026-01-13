@@ -7,6 +7,84 @@
           <div
             class="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-2xl p-6 flex flex-col items-center gap-6"
           >
+            <!-- Installation PWA (mobile) -->
+            <div
+              v-if="shouldShowPwaInstallBanner"
+              class="w-full rounded-xl border border-slate-800 bg-slate-950/50 p-3 sm:hidden"
+              data-testid="pwa-install-banner"
+            >
+              <div class="flex items-start gap-3">
+                <div class="shrink-0">
+                  <img
+                    src="/pwa-icon-192.png"
+                    alt="Icône Radio Francine"
+                    class="h-9 w-9 rounded-lg"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium leading-5">
+                    Installer Radio Francine
+                  </p>
+                  <p class="mt-0.5 text-xs text-slate-400 leading-4">
+                    Accès rapide, plein écran, et disponible hors navigateur.
+                  </p>
+
+                  <div class="mt-2 flex items-center gap-2">
+                    <button
+                      v-if="canPromptPwaInstall"
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-full bg-emerald-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-emerald-300 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                      @click="installPwa"
+                      data-testid="pwa-install-action"
+                    >
+                      Installer
+                    </button>
+
+                    <button
+                      v-else-if="isIos"
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-full border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-slate-900 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                      @click="dismissPwaInstallBanner"
+                      data-testid="pwa-install-ios-ok"
+                    >
+                      OK
+                    </button>
+
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-full border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-slate-900 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                      @click="dismissPwaInstallBanner"
+                      data-testid="pwa-install-dismiss"
+                    >
+                      Plus tard
+                    </button>
+                  </div>
+
+                  <p
+                    v-if="isIos && !canPromptPwaInstall"
+                    class="mt-2 text-[11px] text-slate-400 leading-4"
+                  >
+                    Sur iPhone/iPad: utilisez “Partager” puis “Sur l’écran d’accueil”.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  class="shrink-0 rounded-lg p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                  aria-label="Fermer"
+                  @click="dismissPwaInstallBanner"
+                  data-testid="pwa-install-close"
+                >
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+                    <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.9 4.89a1 1 0 1 0 1.42 1.42L12 13.41l4.89 4.9a1 1 0 0 0 1.42-1.42L13.41 12l4.9-4.89a1 1 0 0 0-.01-1.4Z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
             <!-- Titre radio -->
             <div class="text-center">
               <p class="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">
@@ -96,22 +174,40 @@
 
             <div class="flex-1">
               <div class="flex items-center gap-3 w-full rounded-full bg-slate-900/70 border border-slate-800/80 px-4 py-2.5 shadow-inner shadow-black/30">
-                <svg
-                  viewBox="0 0 24 24"
-                  class="w-5 h-5 text-slate-400 shrink-0"
-                  aria-hidden="true"
+                <button
+                  type="button"
+                  class="shrink-0 -ml-1 rounded-full p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                  :aria-label="isMuted ? 'Rétablir le son' : 'Couper le son'"
+                  @click="toggleMute"
+                  data-testid="mute-toggle"
                 >
-                  <path
+                  <svg
+                    v-if="isMuted"
+                    viewBox="0 0 24 24"
+                    class="w-5 h-5"
                     fill="currentColor"
-                    d="M4 10v4c0 .55.45 1 1 1h2.38L11 18.5a1 1 0 0 0 1.58-.82V6.32A1 1 0 0 0 11 5.5L7.38 9H5c-.55 0-1 .45-1 1Z"
-                  />
-                  <path
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    d="M15 10.5a3 3 0 0 1 0 3"
-                  />
-                </svg>
+                    aria-hidden="true"
+                  >
+                    <path d="M4 10v4c0 .55.45 1 1 1h2.38L11 18.5a1 1 0 0 0 1.58-.82V6.32A1 1 0 0 0 11 5.5L7.38 9H5c-.55 0-1 .45-1 1Z" />
+                    <path d="M16.2 8.8a1 1 0 0 1 1.4 0L19 10.2l1.4-1.4a1 1 0 1 1 1.4 1.4L20.4 11.6l1.4 1.4a1 1 0 0 1-1.4 1.4L19 13l-1.4 1.4a1 1 0 1 1-1.4-1.4l1.4-1.4-1.4-1.4a1 1 0 0 1 0-1.4Z" />
+                  </svg>
+
+                  <svg
+                    v-else
+                    viewBox="0 0 24 24"
+                    class="w-5 h-5"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 10v4c0 .55.45 1 1 1h2.38L11 18.5a1 1 0 0 0 1.58-.82V6.32A1 1 0 0 0 11 5.5L7.38 9H5c-.55 0-1 .45-1 1Z" />
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      d="M15 10.5a3 3 0 0 1 0 3"
+                    />
+                  </svg>
+                </button>
 
                 <input
                   type="range"
@@ -243,6 +339,19 @@
 
   const volume = ref<number>(0.8);
   const audio = ref<HTMLAudioElement | null>(null);
+  const isMuted = ref<boolean>(false);
+  const volumeBeforeMute = ref<number>(0.8);
+
+  type BeforeInstallPromptEvent = Event & {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  };
+
+  const pwaDeferredPrompt = ref<BeforeInstallPromptEvent | null>(null);
+  const isMobileDevice = ref<boolean>(false);
+  const isStandalone = ref<boolean>(false);
+  const isIos = ref<boolean>(false);
+  const hasDismissedPwaInstall = ref<boolean>(false);
 
   const current = reactive<CurrentTrack>({
     artist: null,
@@ -268,6 +377,7 @@
   let ws: WebSocket | null = null;
   let wsReconnectTimer: number | undefined;
   let removeAudioListeners: (() => void) | null = null;
+  let removePwaInstallPromptListener: (() => void) | null = null;
 
   const progressPercent = computed<number>(() => {
     if (!current.duration || current.duration <= 0) return 0;
@@ -492,8 +602,71 @@
   }
 
   function onVolumeChange(): void {
-    if (audio.value) {
-      audio.value.volume = volume.value;
+    const el = audio.value;
+    if (!el) {
+      return;
+    }
+
+    el.volume = volume.value;
+
+    if (volume.value <= 0) {
+      isMuted.value = true;
+      return;
+    }
+
+    volumeBeforeMute.value = volume.value;
+    isMuted.value = false;
+  }
+
+  function toggleMute(): void {
+    const el = audio.value;
+    if (!el) {
+      return;
+    }
+
+    if (!isMuted.value) {
+      volumeBeforeMute.value = volume.value > 0 ? volume.value : el.volume || 0.8;
+      volume.value = 0;
+      el.volume = 0;
+      isMuted.value = true;
+      return;
+    }
+
+    const restoredVolume = volumeBeforeMute.value > 0 ? volumeBeforeMute.value : 0.8;
+    volume.value = restoredVolume;
+    el.volume = restoredVolume;
+    isMuted.value = false;
+  }
+
+  const canPromptPwaInstall = computed<boolean>(() => pwaDeferredPrompt.value !== null);
+
+  const shouldShowPwaInstallBanner = computed<boolean>(() => {
+    return (
+      isMobileDevice.value &&
+      !isStandalone.value &&
+      !hasDismissedPwaInstall.value &&
+      (canPromptPwaInstall.value || isIos.value)
+    );
+  });
+
+  function dismissPwaInstallBanner(): void {
+    hasDismissedPwaInstall.value = true;
+    window.localStorage.setItem('rf:pwa-install-dismissed', '1');
+  }
+
+  async function installPwa(): Promise<void> {
+    const evt = pwaDeferredPrompt.value;
+    if (!evt) {
+      dismissPwaInstallBanner();
+      return;
+    }
+
+    try {
+      await evt.prompt();
+      await evt.userChoice;
+    } finally {
+      pwaDeferredPrompt.value = null;
+      dismissPwaInstallBanner();
     }
   }
 
@@ -638,9 +811,42 @@
   });
 
   onMounted(() => {
+    isMobileDevice.value =
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(max-width: 640px)').matches;
+
+    isStandalone.value =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      // iOS Safari
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Boolean((navigator as any).standalone);
+
+    const ua = navigator.userAgent ?? '';
+    isIos.value =
+      /iPad|iPhone|iPod/.test(ua) &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      !(window as any).MSStream;
+
+    hasDismissedPwaInstall.value =
+      window.localStorage.getItem('rf:pwa-install-dismissed') === '1';
+
+    const onBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      pwaDeferredPrompt.value = e as BeforeInstallPromptEvent;
+    };
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    removePwaInstallPromptListener = () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      removePwaInstallPromptListener = null;
+    };
+
     if (audio.value) {
       audio.value.volume = volume.value;
     }
+
+    volumeBeforeMute.value = volume.value;
+    isMuted.value = volume.value <= 0;
 
     setupStream();
     fetchNowPlaying();
@@ -667,6 +873,9 @@
     }
     if (removeAudioListeners) {
       removeAudioListeners();
+    }
+    if (removePwaInstallPromptListener) {
+      removePwaInstallPromptListener();
     }
   });
   </script>
